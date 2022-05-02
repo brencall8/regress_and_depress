@@ -23,7 +23,7 @@ pairs(SoldPrice ~ Sqft + Bed + Bath + YearBuilt + LotSize + Parking, data = trai
       pch = 19)
 
 
-# Matrix Scatterplot (Lot Size - Without 2 High Leverage Points)
+# Matrix Scatterplot (Without 3 High Leverage Points)
 lotsize_minus_high_lev <- realestate %>%
   filter(LotSize != 416869 & LotSize != 108900 & LotSize != 84071)
 
@@ -35,17 +35,17 @@ traindata2 = lotsize_minus_high_lev[train_ind, ]
 testdata2 = dataframe[-train_ind, ]
 set.seed(NULL)
 
-pairs(SoldPrice ~ LotSize, data = traindata2, 
+pairs(SoldPrice ~ Sqft + Bed + Bath + YearBuilt + LotSize + Parking, data = traindata2, 
       col = c('aquamarine', 'cornflowerblue','royalblue', 'cadetblue', 'cyan', 
               'darkblue', 'deepskyblue', 'darkseagreen', 'darkseagreen1')[factor(traindata$HomeType)], 
       pch = 19)
 
 
 # Interaction Plot 
-interaction = aov(SoldPrice ~ Sqft*HomeType, data = realestate)
-interaction.plot(x.factor = realestate$Sqft, #x-axis variable
-                 trace.factor = realestate$HomeType, #variable for lines
-                 response = realestate$SoldPrice, #y-axis variable
+interaction = aov(SoldPrice ~ Sqft*HomeType, data = traindata)
+interaction.plot(x.factor = traindata$Sqft, #x-axis variable
+                 trace.factor = traindata$HomeType, #variable for lines
+                 response = traindata$SoldPrice, #y-axis variable
                  fun = median, #metric to plot
                  ylab = "Sold Price",
                  xlab = "Square Footage (sqft)",
@@ -56,7 +56,26 @@ interaction.plot(x.factor = realestate$Sqft, #x-axis variable
                  trace.label = "Home Type")
 
 
-# Scatterplot 
-realestate %>%
+# Scatterplot of Sold Price and Sqft, Colored By Home Type
+traindata %>%
   ggplot(aes(y = SoldPrice, x = Sqft, color = HomeType)) +
   geom_point()
+
+
+
+# Histograms of Quantitative Variables 
+traindata %>%
+  ggplot(aes(x = Sqft, fill = HomeType)) +
+  geom_histogram()
+
+traindata %>%
+  ggplot(aes(x = YearBuilt, fill = Pool)) +
+  geom_histogram(binwidth = 10)
+
+traindata2 %>%
+  ggplot(aes(x = LotSize, fill = HomeType)) +
+  geom_histogram(binwidth = 2000)
+
+
+
+
