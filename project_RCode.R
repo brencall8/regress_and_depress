@@ -1,6 +1,5 @@
 library(tidyverse)
 library(readxl)
-library(rgl)
 library(scatterplot3d)
 realestate <- read_excel("SLO_Real_Estate_Feb-Apr2022.xlsx")
 
@@ -30,11 +29,11 @@ lotsize_minus_high_lev <- realestate %>%
   filter(LotSize != 416869 & LotSize != 108900 & LotSize != 84071)
 
 n2 <- 141
-numtrain2 = ceiling(.8*n)
+numtrain2 = ceiling(.8*n2)
 set.seed(678)
-train_ind2 = sample(n, numtrain)
-traindata2 = lotsize_minus_high_lev[train_ind, ]
-testdata2 = dataframe[-train_ind, ]
+train_ind2 = sample(n2, numtrain2)
+traindata2 = lotsize_minus_high_lev[train_ind2, ]
+testdata2 = dataframe[-train_ind2, ]
 set.seed(NULL)
 
 pairs(SoldPrice ~ Sqft + Bed + Bath + YearBuilt + LotSize + Parking, data = traindata2, 
@@ -87,30 +86,14 @@ traindata2 %>%
 
 
 # 3D Scatterplot 
-# with(traindata, plot3d(x=Sqft, y=SoldPrice, z=YearBuilt, pch=10,size=8))
-# 
-# #regression surface (additive model)
-# surface<-function(x1,x2){
-#   cars.fit2$coeff[1]+cars.fit2$coeff[2]*x1+cars.fit2$coeff[3]*x2
-# }
-# 
-# with(traindata,{
-#   x1=seq(min(Sqft),max(Sqft),length=15)
-#   x2=seq(min(SoldPrice),max(SoldPrice),length=100)
-#   y=outer(x1,x2,surface)
-#   surface3d(x1,x2,y,alpha=0.5,col='lightblue',front='lines', back='lines')
-# })
-
-
-s3d <- scatterplot3d(traindata$Sqft, y=traindata$SoldPrice, z=traindata$YearBuilt,
+s3d <- scatterplot3d(traindata2$Sqft, y=traindata2$SoldPrice, z=traindata2$LotSize,
                      xlab = "Square Footage (sqft)",
                      ylab = "Sold Price (Dollars)",
-                     zlab = "Year Built", 
+                     zlab = "Lot Size (sqft)", 
                      angle=55, pch = 16)
 # Add regression plane
-my.lm <- lm(traindata$Sqft ~ traindata$SoldPrice + traindata$YearBuilt)
+my.lm <- lm(traindata2$Sqft ~ traindata2$SoldPrice + traindata2$LotSize)
 s3d$plane3d(my.lm)
-
 
 
 
