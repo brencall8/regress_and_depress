@@ -41,6 +41,9 @@ pairs(SoldPrice ~ Sqft + Bed + Bath + YearBuilt + LotSize + Parking, data = trai
               'darkblue', 'deepskyblue', 'darkseagreen', 'darkseagreen1')[factor(traindata$HomeType)], 
       pch = 19)
 
+# Correlation Matrix 
+cor(traindata[,c(1, 2, 3, 4, 5, 6, 7)])
+cor(traindata2[,c(1, 2, 3, 4, 5, 6, 7)])
 
 # Interaction Plot Between Sold Price and Square Footage (Home Type)
 interaction = aov(SoldPrice ~ Sqft*HomeType, data = traindata)
