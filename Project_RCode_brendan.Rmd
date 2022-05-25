@@ -1,0 +1,102 @@
+---
+title: "Part 6 / Part 10"
+author: "Brendan Callender"
+date: "5/24/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(leaps)
+library(car)
+```
+
+
+```{r}
+realestate <- read_excel("SLO_Real_Estate_Feb-Apr2022.xlsx")
+```
+
+
+```{r}
+full.model <- lm(SoldPrice~., data = realestate)
+summary(full.model)
+```
+
+```{r}
+best.sub <- summary(regsubsets(formula(full.model), data=realestate, method = "exhaustive", nbest = 2))
+
+```
+
+
+```{r}
+n = nrow(realestate) #sample size
+p<-c(2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9) #number of coeffs ***SEE REMARK BELOW***
+
+#Compute and Store Quantities of interest (SSE,s,Rsq,AIC,BIC,Cp)
+SSE<-best.sub$rss             #SSE 
+s<-sqrt(SSE/(n-p))            #s
+Rsq<-best.sub$rsq             #R-squared 
+Rsq.adj<-best.sub$adjr2       #R-squared adjusted
+BIC<-n*log(SSE/n) + p*log(n)  #BIC
+AIC<- n*log(SSE/n) + 2*p      #AIC
+Cp<-best.sub$cp               #Mallow's Cp
+bs<- data.frame(best.sub$outmat, p=p, Cp, AIC, BIC, Rsq, Rsq.adj, s)
+```
+
+```{r}
+bs %>%
+  arrange(BIC)
+```
+
+```{r}
+fit.one <- lm(I(log(SoldPrice))~Sqft+LotSize+HomeType, data = realestate)
+
+summary(fit.one)
+```
+
+
+
+```{r}
+plot(resid(lm(I(log(SoldPrice))~LotSize + HomeType, data = realestate))~resid(lm(Sqft ~ LotSize + HomeType, data = realestate)))
+```
+
+
+```{r}
+plot(resid(lm(I(log(SoldPrice))~Sqft + HomeType, data = realestate))~resid(lm(LotSize ~ Sqft + HomeType, data = realestate)))
+```
+
+
+
+```{r}
+fit.two <- lm(I(log(SoldPrice))~I(log(Sqft))+YearBuilt+HomeType, data = realestate)
+
+summary(fit.two)
+```
+
+```{r}
+plot(resid(lm(I(log(SoldPrice))~YearBuilt + HomeType, data = realestate))~resid(lm(Sqft ~ YearBuilt + HomeType, data = realestate)))
+```
+
+
+```{r}
+plot(resid(lm(I(log(SoldPrice))~I(log(Sqft)) + HomeType, data = realestate))~resid(lm(YearBuilt ~ I(log(Sqft)) + HomeType, data = realestate)))
+```
+
+```{r}
+plot(fit.one)
+```
+
+```{r}
+plot(fit.two)
+```
+
+
+
+
+

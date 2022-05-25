@@ -24,6 +24,8 @@ pairs(SoldPrice ~ Sqft + Bed + Bath + YearBuilt + LotSize + Parking, data = trai
       pch = 19)
 
 
+# VI. Variable Pre-Processing
+
 # Matrix Scatterplot (Without 3 High Leverage Points)
 lotsize_minus_high_lev <- realestate %>%
   filter(LotSize != 416869 & LotSize != 108900 & LotSize != 84071)
