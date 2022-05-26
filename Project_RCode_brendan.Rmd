@@ -19,7 +19,12 @@ library(car)
 
 
 ```{r}
-realestate <- read_excel("SLO_Real_Estate_Feb-Apr2022.xlsx")
+full <- read_excel("SLO_Real_Estate_Feb-Apr2022.xlsx")
+n <- 144
+numtrain = ceiling(.8*n)
+set.seed(678)
+train_ind = sample(n, numtrain)
+realestate = full[train_ind, ]
 ```
 
 
@@ -231,4 +236,40 @@ vif(fit.four)
 ```{r}
 vif(fit.three)
 ```
+
+
+```{r}
+boxCox(lm(SoldPrice~Sqft+YearBuilt+HomeTypeNew, data = realestate))
+```
+
+```{r}
+fit.five = lm(lm(I(sqrt(SoldPrice))~Sqft+YearBuilt+HomeTypeNew, data = realestate))
+
+summary(fit.five)
+```
+
+
+```{r}
+plot(fit.five)
+```
+
+
+```{r}
+
+plot(resid(lm(I(sqrt(SoldPrice))~Sqft + HomeTypeNew, data = realestate))~resid(lm(YearBuilt ~ Sqft + HomeTypeNew, data = realestate)))
+```
+
+
+
+```{r}
+plot(resid(lm(I(sqrt(SoldPrice))~YearBuilt + HomeTypeNew, data = realestate))~resid(lm(Sqft ~ YearBuilt + HomeTypeNew, data = realestate)))
+```
+
+
+```{r}
+realestate %>%
+  ggplot() +
+  geom_boxplot(aes(x = HomeTypeNew, y = SoldPrice))
+```
+
 

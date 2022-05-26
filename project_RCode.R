@@ -17,7 +17,12 @@ traindata = realestate[train_ind, ]
 testdata = dataframe[-train_ind, ]
 set.seed(NULL)
 
-
+traindata <- realestate %>%
+  mutate(HomeTypeNew = 
+           case_when(HomeType == "Condominium" ~ "Condo", 
+                     HomeType == "SingleFamilyResidence" ~ "SingleFam",
+                     HomeType == "ManufacturedHome" ~ "Manufactured",
+                     TRUE ~ "Other")) 
 
 # V. Data Visualization
 # Matrix Scatterplot
@@ -132,7 +137,7 @@ plot(final_model)
 plot(resid(final_model) ~ log(SoldPrice), data=traindata, ylab='Residuals', xlab='log(SoldPrice)')
 abline(h=0,lty=2)
 
-plot(resid(final_model) ~ YearBuilt, data=traindata, ylab='Residuals', xlab='YearBuilt')
+plot(resid(final_model) ~ resid(lm(YearBuilt~Sqft+HomeTypeNew, data = traindata)), ylab='Residuals', xlab='YearBuilt')
 abline(h=0,lty=2)
 
 plot(resid(final_model) ~ HomeTypeNew, data=traindata, ylab='Residuals', xlab='HomeTypeNew')
@@ -146,7 +151,7 @@ bptest(final_model)
 
 
 # VIII. Fit a Linear Model 
-final_model = lm(I(log(SoldPrice)) ~ I(log(Sqft)) + YearBuilt + HomeTypeNew, data = traindata)
+final_model = lm(I(sqrt(SoldPrice)) ~ Sqft + YearBuilt + HomeTypeNew, data = traindata)
 summary(final_model)
 vif(final_model)
 
