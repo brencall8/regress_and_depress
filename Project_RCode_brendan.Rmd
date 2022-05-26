@@ -59,6 +59,11 @@ fit.one <- lm(I(log(SoldPrice))~Sqft+LotSize+HomeType, data = realestate)
 
 summary(fit.one)
 ```
+```{r}
+realestate %>%
+  arrange(desc(LotSize)) %>%
+  filter()
+```
 
 
 
@@ -68,13 +73,17 @@ plot(resid(lm(I(log(SoldPrice))~LotSize + HomeType, data = realestate))~resid(lm
 
 
 ```{r}
-plot(resid(lm(I(log(SoldPrice))~Sqft + HomeType, data = realestate))~resid(lm(LotSize ~ Sqft + HomeType, data = realestate)))
+plot(resid(lm(I(log(SoldPrice))~Sqft + HomeType, data = realestate))~resid(lm(LotSize ~ YearBuilt + Sqft + HomeType, data = realestate)))
+```
+
+```{r}
+plot(fit.one)
 ```
 
 
 
 ```{r}
-fit.two <- lm(I(log(SoldPrice))~I(log(Sqft))+YearBuilt+HomeType, data = realestate)
+fit.two <- lm(I(log(SoldPrice))~Sqft+YearBuilt+HomeType, data = realestate)
 
 summary(fit.two)
 ```
@@ -85,12 +94,9 @@ plot(resid(lm(I(log(SoldPrice))~YearBuilt + HomeType, data = realestate))~resid(
 
 
 ```{r}
-plot(resid(lm(I(log(SoldPrice))~I(log(Sqft)) + HomeType, data = realestate))~resid(lm(YearBuilt ~ I(log(Sqft)) + HomeType, data = realestate)))
+plot(resid(lm(I(log(SoldPrice))~Sqft + HomeType, data = realestate))~resid(lm(YearBuilt ~ Sqft + HomeType, data = realestate)))
 ```
 
-```{r}
-plot(fit.one)
-```
 
 ```{r}
 plot(fit.two)
@@ -98,5 +104,131 @@ plot(fit.two)
 
 
 
+```{r}
+realestate %>%
+  ggplot() +
+  geom_point(aes(y = SoldPrice, x = Sqft, col = HomeType))
+```
 
+```{r}
+realestate <- realestate %>%
+  mutate(HomeTypeNew = 
+           case_when(HomeType == "Condominium" ~ "Condo", 
+             HomeType == "SingleFamilyResidence" ~ "SingleFam",
+             HomeType == "ManufacturedHome" ~ "Manufactured",
+             TRUE ~ "Other")) 
+
+realestate %>%
+  ggplot() +
+  geom_point(aes(y = SoldPrice, x = Sqft, col = HomeTypeNew))
+  
+```
+
+```{r}
+realestate %>%
+  group_by(HomeTypeNew) %>%
+  summarise(n = n())
+  
+```
+
+
+
+```{r}
+fit.three <- lm(I(log(SoldPrice))~Sqft+HomeTypeNew+YearBuilt, data = realestate)
+
+summary(fit.three)
+```
+
+
+
+```{r}
+plot(resid(lm(I(log(SoldPrice))~YearBuilt + HomeTypeNew, data = realestate))~resid(lm(Sqft ~ YearBuilt + HomeTypeNew, data = realestate)))
+```
+
+
+
+
+```{r}
+plot(resid(lm(I(log(SoldPrice))~Sqft + HomeTypeNew, data = realestate))~resid(lm(YearBuilt ~ Sqft + HomeTypeNew, data = realestate)))
+```
+
+
+```{r}
+plot(fit.three)
+```
+
+```{r}
+full.model2 <- lm(I(log(SoldPrice)) ~ Sqft + YearBuilt + HomeTypeNew + Bed + Bath + Parking + Cooling + Heating + Pool, data = realestate)
+```
+
+
+
+```{r}
+best.sub2 <- summary(regsubsets(formula(full.model2), data=realestate, method = "exhaustive", nbest = 2))
+
+```
+
+
+
+
+
+```{r}
+n = nrow(realestate) #sample size
+p<-c(2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9) #number of coeffs ***SEE REMARK BELOW***
+
+#Compute and Store Quantities of interest (SSE,s,Rsq,AIC,BIC,Cp)
+SSE<-best.sub2$rss             #SSE 
+s<-sqrt(SSE/(n-p))            #s
+Rsq<-best.sub2$rsq             #R-squared 
+Rsq.adj<-best.sub2$adjr2       #R-squared adjusted
+BIC<-n*log(SSE/n) + p*log(n)  #BIC
+AIC<- n*log(SSE/n) + 2*p      #AIC
+Cp<-best.sub2$cp               #Mallow's Cp
+bs2<- data.frame(best.sub2$outmat, p=p, Cp, AIC, BIC, Rsq, Rsq.adj, s)
+```
+
+
+```{r}
+bs2 %>%
+  arrange(BIC)
+```
+
+```{r}
+fit.four <- lm(log(SoldPrice) ~ Sqft + HomeTypeNew + I(Bath - mean(realestate$Bath)), data = realestate)
+```
+
+
+
+```{r}
+plot(fit.four)
+```
+
+
+
+```{r}
+
+plot(resid(lm(I(log(SoldPrice))~Sqft + HomeTypeNew, data = realestate))~resid(lm(Bath ~ Sqft + HomeTypeNew, data = realestate)))
+
+```
+
+
+```{r}
+plot(resid(lm(I(log(SoldPrice))~YearBuilt + HomeTypeNew, data = realestate))~resid(lm(Sqft ~ YearBuilt + HomeTypeNew, data = realestate)))
+```
+
+
+```{r}
+realestate %>%
+  ggplot() +
+  geom_point(aes(x = Sqft, y = Bath))
+```
+
+```{r}
+vif(fit.four)
+```
+
+
+```{r}
+vif(fit.three)
+```
 
