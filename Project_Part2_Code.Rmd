@@ -1,6 +1,6 @@
 ---
-title: "Project_Part2_Code"
-author: "Brendan Callender"
+title: "Residential Regression R Code"
+author: "Brendan Callender, Martin Hsu, and Rachel Roggenkemper"
 date: "5/26/2022"
 output: html_document
 ---
@@ -9,47 +9,144 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
 ```{r}
 library(tidyverse)
 library(readxl)
 library(leaps)
 library(car)
+library(scatterplot3d)
+library(GGally)
+library('lmtest')
 ```
 
-
 ```{r}
-full <- read_excel("SLO_Real_Estate_Feb-Apr2022.xlsx")
-n <- 144
-numtrain = ceiling(.8*n)
-set.seed(678)
-train_ind = sample(n, numtrain)
-realestate = full[train_ind, ]
-realestate <- realestate %>%
+realestate <- read_excel("SLO_Real_Estate_Feb-Apr2022.xlsx")
+
+realestate_clean <- realestate %>%
+  filter(LotSize != 416869 & LotSize != 108900 & LotSize != 84071)
+
+realestate_clean <- realestate_clean %>%
   mutate(HomeTypeNew = 
            case_when(HomeType == "Condominium" ~ "Condo", 
              HomeType == "SingleFamilyResidence" ~ "SingleFam",
              HomeType == "ManufacturedHome" ~ "Manufactured",
              TRUE ~ "Other")) 
+
+realestate_clean$Cooling = factor(realestate_clean$Cooling)
+realestate_clean$Heating = factor(realestate_clean$Heating)
+realestate_clean$HomeType = factor(realestate_clean$HomeType)
+realestate_clean$Pool = factor(realestate_clean$Pool)
 ```
+
+
+
+# IV. Split the Data
+```{r}
+n <- 141
+numtrain = ceiling(.8*n)
+set.seed(678)
+train_ind = sample(n, numtrain)
+traindata = realestate_clean[train_ind, ]
+testdata = realestate_clean[-train_ind, ]
+set.seed(NULL)
+```
+
+
+
+# V. Data Visualization
+```{r}
+# Matrix Scatterplot
+pairs(SoldPrice ~ Sqft + Bed + Bath + YearBuilt + LotSize + Parking, data = traindata, 
+      col = c('aquamarine', 'cornflowerblue','royalblue', 'cadetblue', 'cyan', 
+              'darkblue', 'deepskyblue', 'darkseagreen', 'darkseagreen1')[factor(traindata$HomeTypeNew)], 
+      pch = 19)
+```
+
+```{r}
+# Correlation Matrix 
+cor(traindata[,c(1, 2, 3, 4, 5, 6, 7)])
+```
+
+```{r}
+# Matrix Scatterplot with ggpairs()
+ggpairs(traindata[,-c(8:12)], 
+        upper=list(continuous='points'),
+        lower=list(continuous='cor',combo='blank',discrete='blank'))
+```
+
+```{r}
+# Interaction Plot Between Sold Price and Square Footage (Home Type)
+fit_interaction = lm(SoldPrice~Sqft*HomeTypeNew, data=traindata)
+summary(fit_interaction)
+
+plot(SoldPrice ~ Sqft, data = traindata, 
+     col = c('cornflowerblue','royalblue','cyan', 'darkseagreen')[HomeTypeNew], 
+     pch = c(15, 16, 17, 18)[HomeTypeNew])
+legend('bottomright',legend=levels(traindata$HomeTypeNew), 
+       pch = c(15, 16, 17, 18), 
+       col = c('cornflowerblue','royalblue','cyan', 'darkseagreen'), 
+       lty = 1)
+coeff = fit_interaction$coeff
+abline(coeff[1], coeff[2], col='cornflowerblue')
+abline(coeff[1] + coeff[3], coeff[2] + coeff[6], col = 'royalblue') 
+abline(coeff[1] + coeff[4], coeff[2] + coeff[7], col = 'cyan') 
+abline(coeff[1] + coeff[5], coeff[2] + coeff[8], col = 'seagreen') 
+```
+
+```{r}
+# Histograms of Quantitative Variables 
+traindata %>%
+  ggplot(aes(x = Sqft, fill = HomeTypeNew)) +
+  geom_histogram() +
+  scale_fill_manual(values = c('aquamarine', 'cornflowerblue','royalblue', 'cadetblue', 'cyan', 
+                               'darkblue', 'deepskyblue', 'darkseagreen', 'darkseagreen1'))
+
+traindata %>%
+  ggplot(aes(x = YearBuilt, fill = Pool)) +
+  geom_histogram(binwidth = 10) +
+  scale_fill_manual(values = c('royalblue', 'cyan'))
+
+traindata %>%
+  ggplot(aes(x = LotSize, fill = HomeTypeNew)) +
+  geom_histogram(binwidth = 2000) +
+  scale_fill_manual(values = c('aquamarine', 'cornflowerblue','royalblue', 'cadetblue', 'cyan', 
+                               'darkblue', 'deepskyblue', 'darkseagreen', 'darkseagreen1'))
+```
+
+```{r}
+# Interaction Plot Between Home Type and Pool
+traindata$Pool=factor(traindata$Pool)
+with(traindata, interaction.plot(HomeTypeNew, Pool, log(SoldPrice), type = 'b', 
+                                 col = c('royalblue','cyan'), 
+                                 pch = c(16, 17)))
+```
+
+```{r}
+# 3D Scatterplot 
+s3d <- scatterplot3d(traindata2$Sqft, y=traindata2$SoldPrice, z=traindata2$LotSize,
+                     xlab = "Square Footage (sqft)",
+                     ylab = "Sold Price (Dollars)",
+                     zlab = "Lot Size (sqft)", 
+                     angle=55, pch = 16)
+# Add regression plane
+my.lm <- lm(traindata2$Sqft ~ traindata2$SoldPrice + traindata2$LotSize)
+s3d$plane3d(my.lm)
+```
+
 
 # Part VI. Variable Pre-Processing
-
 Using Best Subsets, a model containing Sqft, YearBuilt, and HomeTypeNew looked like the best option for the project.
-
-
 ```{r}
-realestateNew <- realestate %>%
+traindataNew <- traindata %>%
   select(-c(HomeType, LotSize))
 
-full.model <- lm(SoldPrice~., data = realestateNew)
+full.model <- lm(SoldPrice~., data = traindataNew)
 
-best.sub <- summary(regsubsets(formula(full.model), data=realestate, method = "exhaustive", nbest = 2))
+best.sub <- summary(regsubsets(formula(full.model), data=traindata, method = "exhaustive", nbest = 2))
 ```
 
-
 ```{r}
-n = nrow(realestate)
+n = nrow(traindata)
 p<-c(2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9) 
 
 SSE<-best.sub$rss             #SSE 
@@ -63,55 +160,45 @@ bs<- data.frame(best.sub$outmat, p=p, Cp, AIC, BIC, Rsq, Rsq.adj, s) %>%
   arrange(BIC)
 ```
 
-
 Many models reccomended the inclusion of lot size however one AVPlot ruled out LotSize immediately.  You can see one point that is heavily influencing the entire trend.  This is very simular to one plot from Anscomb's Quartet. So the next best Model that met the project requirements 
 
 ```{r}
-plot(resid(lm(I(sqrt(SoldPrice))~Sqft + HomeTypeNew, data = realestate))~resid(lm(LotSize ~ YearBuilt + Sqft + HomeTypeNew, data = realestate)))
+plot(resid(lm(I(sqrt(SoldPrice))~Sqft + HomeTypeNew, data = traindata))~resid(lm(LotSize ~ YearBuilt + Sqft + HomeTypeNew, data = traindata)))
 ```
 
-
-
 ```{r}
-fit.one <- lm(SoldPrice ~ Sqft + YearBuilt + Bath  + Parking + HomeTypeNew, data  = realestate)
+fit.one <- lm(SoldPrice ~ Sqft + YearBuilt + Bath  + Parking + HomeTypeNew, data  = traindata)
 
 plot(fit.one)
 ```
-
 
 Looking at residual vs predicted plot, there is a obvious violation of the equal variance assumption as well as normality assumption.  We will likely need a transform the response and then transform a predictor if necessary.
 
 Since we are transforming the y variable we can use the BoxCox procedure to see which transformation of the response minimizes the SSE.
 
-
 ```{r}
-boxCox(lm(SoldPrice~Sqft+YearBuilt+HomeTypeNew, data = realestate))
+boxCox(lm(SoldPrice~Sqft+YearBuilt+HomeTypeNew, data = traindata))
 ```
-
-
 
 Using Box-Cox, we decided a sqrt (1/2) transformation on the response variable of SoldPrice because it is contained in the confidence interval for the box cox transformation.
 
 ```{r}
-fit.two <- lm(I(sqrt(SoldPrice)) ~ Sqft + YearBuilt + Bath  + Parking + HomeTypeNew, data  = realestate)
+fit.two <- lm(I(sqrt(SoldPrice)) ~ Sqft + YearBuilt + Bath  + Parking + HomeTypeNew, data  = traindata)
 
 plot(fit.two)
 ```
 
-
-
 ```{r}
-realestateNew <- realestate %>%
+realestateNew <- traindata %>%
   select(-c(HomeType, LotSize))
 
-full.model2 <- lm(I(sqrt(SoldPrice))~., data = realestateNew)
+full.model2 <- lm(I(sqrt(SoldPrice))~., data = traindataNew)
 
-best.sub2 <- summary(regsubsets(formula(full.model2), data=realestate, method = "exhaustive", nbest = 2))
+best.sub2 <- summary(regsubsets(formula(full.model2), data=traindata, method = "exhaustive", nbest = 2))
 ```
 
-
 ```{r}
-n = nrow(realestate)
+n = nrow(traindata)
 p<-c(2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9) 
 
 SSE<-best.sub2$rss             #SSE 
@@ -124,3 +211,41 @@ Cp<-best.sub2$cp               #Mallow's Cp
 bs2<- data.frame(best.sub2$outmat, p=p, Cp, AIC, BIC, Rsq, Rsq.adj, s) %>%
   arrange(BIC)
 ```
+
+
+
+# VII. Residual Analysis
+```{r}
+final_model = lm(I(sqrt(SoldPrice)) ~ Sqft + YearBuilt + HomeTypeNew, data = traindata)
+
+par(mfrow=c(2,2)) #plot in 2 by 2 grid   
+plot(final_model)
+
+plot(resid(final_model) ~ log(SoldPrice), data=traindata, ylab='Residuals', xlab='log(SoldPrice)')
+abline(h=0,lty=2)
+
+plot(resid(final_model) ~ resid(lm(YearBuilt~Sqft+HomeTypeNew, data = traindata)), ylab='Residuals', xlab='YearBuilt')
+abline(h=0,lty=2)
+
+plot(resid(final_model) ~ HomeTypeNew, data=traindata, ylab='Residuals', xlab='HomeTypeNew')
+abline(h=0,lty=2)
+
+hist(resid(final_model), main='', xlab='Residuals')
+
+shapiro.test(resid(final_model))
+bptest(final_model)
+```
+
+
+
+# VIII. Fit a Linear Model 
+```{r}
+summary(final_model)
+vif(final_model)
+```
+
+
+
+
+
+
