@@ -1,0 +1,126 @@
+---
+title: "Project_Part2_Code"
+author: "Brendan Callender"
+date: "5/26/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(leaps)
+library(car)
+```
+
+
+```{r}
+full <- read_excel("SLO_Real_Estate_Feb-Apr2022.xlsx")
+n <- 144
+numtrain = ceiling(.8*n)
+set.seed(678)
+train_ind = sample(n, numtrain)
+realestate = full[train_ind, ]
+realestate <- realestate %>%
+  mutate(HomeTypeNew = 
+           case_when(HomeType == "Condominium" ~ "Condo", 
+             HomeType == "SingleFamilyResidence" ~ "SingleFam",
+             HomeType == "ManufacturedHome" ~ "Manufactured",
+             TRUE ~ "Other")) 
+```
+
+# Part VI. Variable Pre-Processing
+
+Using Best Subsets, a model containing Sqft, YearBuilt, and HomeTypeNew looked like the best option for the project.
+
+
+```{r}
+realestateNew <- realestate %>%
+  select(-c(HomeType, LotSize))
+
+full.model <- lm(SoldPrice~., data = realestateNew)
+
+best.sub <- summary(regsubsets(formula(full.model), data=realestate, method = "exhaustive", nbest = 2))
+```
+
+
+```{r}
+n = nrow(realestate)
+p<-c(2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9) 
+
+SSE<-best.sub$rss             #SSE 
+s<-sqrt(SSE/(n-p))            #s
+Rsq<-best.sub$rsq             #R-squared 
+Rsq.adj<-best.sub$adjr2       #R-squared adjusted
+BIC<-n*log(SSE/n) + p*log(n)  #BIC
+AIC<- n*log(SSE/n) + 2*p      #AIC
+Cp<-best.sub$cp               #Mallow's Cp
+bs<- data.frame(best.sub$outmat, p=p, Cp, AIC, BIC, Rsq, Rsq.adj, s) %>%
+  arrange(BIC)
+```
+
+
+Many models reccomended the inclusion of lot size however one AVPlot ruled out LotSize immediately.  You can see one point that is heavily influencing the entire trend.  This is very simular to one plot from Anscomb's Quartet. So the next best Model that met the project requirements 
+
+```{r}
+plot(resid(lm(I(sqrt(SoldPrice))~Sqft + HomeTypeNew, data = realestate))~resid(lm(LotSize ~ YearBuilt + Sqft + HomeTypeNew, data = realestate)))
+```
+
+
+
+```{r}
+fit.one <- lm(SoldPrice ~ Sqft + YearBuilt + Bath  + Parking + HomeTypeNew, data  = realestate)
+
+plot(fit.one)
+```
+
+
+Looking at residual vs predicted plot, there is a obvious violation of the equal variance assumption as well as normality assumption.  We will likely need a transform the response and then transform a predictor if necessary.
+
+Since we are transforming the y variable we can use the BoxCox procedure to see which transformation of the response minimizes the SSE.
+
+
+```{r}
+boxCox(lm(SoldPrice~Sqft+YearBuilt+HomeTypeNew, data = realestate))
+```
+
+
+
+Using Box-Cox, we decided a sqrt (1/2) transformation on the response variable of SoldPrice because it is contained in the confidence interval for the box cox transformation.
+
+```{r}
+fit.two <- lm(I(sqrt(SoldPrice)) ~ Sqft + YearBuilt + Bath  + Parking + HomeTypeNew, data  = realestate)
+
+plot(fit.two)
+```
+
+
+
+```{r}
+realestateNew <- realestate %>%
+  select(-c(HomeType, LotSize))
+
+full.model2 <- lm(I(sqrt(SoldPrice))~., data = realestateNew)
+
+best.sub2 <- summary(regsubsets(formula(full.model2), data=realestate, method = "exhaustive", nbest = 2))
+```
+
+
+```{r}
+n = nrow(realestate)
+p<-c(2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9) 
+
+SSE<-best.sub2$rss             #SSE 
+s<-sqrt(SSE/(n-p))            #s
+Rsq<-best.sub2$rsq             #R-squared 
+Rsq.adj<-best.sub2$adjr2       #R-squared adjusted
+BIC<-n*log(SSE/n) + p*log(n)  #BIC
+AIC<- n*log(SSE/n) + 2*p      #AIC
+Cp<-best.sub2$cp               #Mallow's Cp
+bs2<- data.frame(best.sub2$outmat, p=p, Cp, AIC, BIC, Rsq, Rsq.adj, s) %>%
+  arrange(BIC)
+```
