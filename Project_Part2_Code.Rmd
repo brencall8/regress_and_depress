@@ -55,16 +55,16 @@ set.seed(NULL)
 
 # V. Data Visualization
 ```{r}
-# Matrix Scatterplot
-pairs(SoldPrice ~ Sqft + Bed + Bath + YearBuilt + LotSize + Parking, data = traindata, 
+# Matrix Scatterplot (outliers not removed)
+pairs(SoldPrice ~ Sqft + Bed + Bath + YearBuilt + LotSize + Parking, data = realestate, 
       col = c('aquamarine', 'cornflowerblue','royalblue', 'cadetblue', 'cyan', 
-              'darkblue', 'deepskyblue', 'darkseagreen', 'darkseagreen1')[factor(traindata$HomeTypeNew)], 
+              'darkblue', 'deepskyblue', 'darkseagreen', 'darkseagreen1')[factor(realestate_clean$HomeTypeNew)], 
       pch = 19)
 ```
 
 ```{r}
-# Correlation Matrix 
-cor(traindata[,c(1, 2, 3, 4, 5, 6, 7)])
+# Correlation Matrix (outliers not removed)
+cor(realestate[,c(1, 2, 3, 4, 5, 6, 7)])
 ```
 
 ```{r}
