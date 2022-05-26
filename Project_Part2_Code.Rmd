@@ -102,7 +102,7 @@ plot(fit.two)
 
 ```{r}
 realestateNew <- realestate %>%
-  select(-c(HomeType, LotSize))
+  select(-HomeType)
 
 full.model2 <- lm(I(sqrt(SoldPrice))~., data = realestateNew)
 
@@ -115,12 +115,14 @@ n = nrow(realestate)
 p<-c(2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9) 
 
 SSE<-best.sub2$rss             #SSE 
-s<-sqrt(SSE/(n-p))            #s
+s<-sqrt(SSE/(n-p))             #s
 Rsq<-best.sub2$rsq             #R-squared 
 Rsq.adj<-best.sub2$adjr2       #R-squared adjusted
-BIC<-n*log(SSE/n) + p*log(n)  #BIC
-AIC<- n*log(SSE/n) + 2*p      #AIC
+BIC<-n*log(SSE/n) + p*log(n)   #BIC
+AIC<- n*log(SSE/n) + 2*p       #AIC
 Cp<-best.sub2$cp               #Mallow's Cp
 bs2<- data.frame(best.sub2$outmat, p=p, Cp, AIC, BIC, Rsq, Rsq.adj, s) %>%
   arrange(BIC)
 ```
+
+
