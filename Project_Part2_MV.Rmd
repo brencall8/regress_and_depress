@@ -1,0 +1,114 @@
+---
+title: "Model Validation"
+author: "Brendan Callender"
+date: "5/29/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(leaps)
+library(car)
+library(scatterplot3d)
+library(GGally)
+library('lmtest')
+```
+
+
+
+
+```{r}
+
+realestate <- read_excel("SLO_Real_Estate_Feb-Apr2022.xlsx")
+
+realestate_clean <- realestate %>%
+  filter(LotSize != 416869 & LotSize != 108900 & LotSize != 84071)
+
+realestate_clean <- realestate_clean %>%
+  mutate(HomeTypeNew = 
+           case_when(HomeType == "Condominium" ~ "Condo", 
+             HomeType == "SingleFamilyResidence" ~ "SingleFam",
+             HomeType == "ManufacturedHome" ~ "Manufactured",
+             TRUE ~ "Other")) 
+
+realestate_clean$Cooling = factor(realestate_clean$Cooling)
+realestate_clean$Heating = factor(realestate_clean$Heating)
+realestate_clean$HomeType = factor(realestate_clean$HomeType)
+realestate_clean$Pool = factor(realestate_clean$Pool)
+```
+
+
+
+# IV. Split the Data
+```{r}
+
+n <- 141
+numtrain = ceiling(.8*n)
+set.seed(678)
+train_ind = sample(n, numtrain)
+traindata = realestate_clean[train_ind, ]
+testdata = realestate_clean[-train_ind, ]
+set.seed(NULL)
+
+```
+
+
+```{r}
+testdata <- testdata %>%
+  mutate(HomeTypeNew = 
+           case_when(HomeType == "Condominium" ~ "Condo", 
+             HomeType == "SingleFamilyResidence" ~ "SingleFam",
+             HomeType == "ManufacturedHome" ~ "Manufactured",
+             TRUE ~ "Other")) 
+```
+
+
+```{r}
+model <- lm(I(sqrt(SoldPrice)) ~ Sqft + LotSize + HomeTypeNew, data = traindata)
+
+
+```
+
+```{r}
+
+predicted_test <- (predict(model, testdata))^2
+actual_test <- testdata$SoldPrice
+
+MSPE <- mean((actual_test - predicted_test)^2)
+s1 <- sqrt(MSPE)
+
+MSPE
+s1
+
+```
+
+
+```{r}
+actual_train <- traindata$SoldPrice
+predicted_train <- (model$fitted.values)^2
+
+MSE <- mean((actual_train - predicted_train)^2)
+s2 <- sqrt(MSE)
+
+MSE
+s2
+```
+
+```{r}
+MSPE - MSE
+s1 - s2
+```
+
+```{r}
+summary(model)
+```
+
+
+
