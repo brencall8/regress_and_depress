@@ -111,3 +111,14 @@ summary(model)
 ```
 
 
+```{r}
+
+SSTO <- sum((anova(model))$'Sum Sq')
+
+PRESS <- sum((resid(model) / (1 - hatvalues(model)))^2)
+
+R_squared_pred <- PRESS / SSTO
+
+```
+
+
