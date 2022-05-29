@@ -78,8 +78,8 @@ model <- lm(I(sqrt(SoldPrice)) ~ Sqft + LotSize + HomeTypeNew, data = traindata)
 
 ```{r}
 
-predicted_test <- (predict(model, testdata))^2
-actual_test <- testdata$SoldPrice
+predicted_test <- predict(model, testdata)
+actual_test <- sqrt(testdata$SoldPrice)
 
 MSPE <- mean((actual_test - predicted_test)^2)
 s1 <- sqrt(MSPE)
@@ -91,8 +91,8 @@ s1
 
 
 ```{r}
-actual_train <- traindata$SoldPrice
-predicted_train <- (model$fitted.values)^2
+actual_train <- sqrt(traindata$SoldPrice)
+predicted_train <- model$fitted.values
 
 MSE <- mean((actual_train - predicted_train)^2)
 s2 <- sqrt(MSE)
@@ -109,6 +109,5 @@ s1 - s2
 ```{r}
 summary(model)
 ```
-
 
 
