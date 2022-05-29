@@ -79,7 +79,6 @@ panel.background = element_blank(), axis.line = element_line(colour = "black"))
 
 ```{r}
 # Interaction Plot Between Sold Price and Square Footage (Home Type)
-traindata$HomeTypeNew = factor(traindata$HomeTypeNew)
 fit_interaction = lm(SoldPrice~Sqft*HomeTypeNew, data=traindata)
 summary(fit_interaction)
 
@@ -127,7 +126,6 @@ traindata %>%
   facet_wrap(~HomeTypeNew) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 panel.background = element_blank(), axis.line = element_line(colour = "black"))
-
 ```
 
 ```{r}
@@ -231,19 +229,26 @@ bs2<- data.frame(best.sub2$outmat, p=p, Cp, AIC, BIC, Rsq, Rsq.adj, s) %>%
 
 # VII. Residual Analysis
 ```{r}
-final_model = lm(I(sqrt(SoldPrice)) ~ Sqft + YearBuilt + HomeTypeNew, data = traindata)
+final_model = lm(I(sqrt(SoldPrice)) ~ Sqft + LotSize + HomeTypeNew, data = traindata)
 
 par(mfrow=c(2,2)) #plot in 2 by 2 grid   
 plot(final_model)
 
-plot(resid(final_model) ~ log(SoldPrice), data=traindata, ylab='Residuals', xlab='log(SoldPrice)')
+par(mfrow=c(2,2)) #plot in 2 by 2 grid  
+
+plot(resid(final_model) ~ fitted(final_model), ylab='Residuals', xlab='Fitted')
 abline(h=0,lty=2)
 
-plot(resid(final_model) ~ resid(lm(YearBuilt~Sqft+HomeTypeNew, data = traindata)), ylab='Residuals', xlab='YearBuilt')
-abline(h=0,lty=2)
+plot(resid(final_model) ~ Sqft, data=traindata, ylab='Residuals', xlab='Sqft')
+abline(h=0,lty=2) 
+
+plot(resid(final_model) ~ LotSize, data=traindata, ylab='Residuals', xlab='Lot Size')
+abline(h=0,lty=2) 
 
 plot(resid(final_model) ~ HomeTypeNew, data=traindata, ylab='Residuals', xlab='HomeTypeNew')
 abline(h=0,lty=2)
+
+par(mfrow=c(1,1))
 
 hist(resid(final_model), main='', xlab='Residuals')
 
@@ -258,4 +263,36 @@ bptest(final_model)
 summary(final_model)
 vif(final_model)
 ```
+
+
+
+# IX. Statistical Inference
+```{r}
+# Overall F-Test
+summary(final_model)
+```
+
+```{r}
+# Partial F-Test
+model_reduced = lm(I(sqrt(SoldPrice)) ~ Sqft, data=traindata)
+anova(model_reduced, final_model)
+```
+
+```{r}
+# Test for Interaction Significance 
+anova(lm(SoldPrice ~ Sqft + HomeTypeNew, data = traindata), 
+      lm(SoldPrice ~ Sqft + HomeTypeNew + Sqft:HomeTypeNew, data = traindata))
+
+anova(lm(I(sqrt(SoldPrice)) ~ LotSize + Sqft + HomeTypeNew, data = traindata), 
+      lm(I(sqrt(SoldPrice)) ~ LotSize + Sqft + HomeTypeNew + Sqft:HomeTypeNew, data = traindata))
+```
+
+```{r}
+# CIs for Mean Response Value and Future Predicted Value 
+new.house = data.frame(Sqft = 3000, LotSize = 10000, HomeTypeNew = "SingleFam")
+
+predict(final_model, newdata = new.house, interval = "confidence", level=0.95)
+predict(final_model, newdata = new.house, interval = "prediction", level=0.95)
+```
+
 
