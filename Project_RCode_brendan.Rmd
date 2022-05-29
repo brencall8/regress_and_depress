@@ -19,22 +19,45 @@ library(car)
 
 
 ```{r}
-full <- read_excel("SLO_Real_Estate_Feb-Apr2022.xlsx")
-n <- 144
-numtrain = ceiling(.8*n)
-set.seed(678)
-train_ind = sample(n, numtrain)
-realestate = full[train_ind, ]
+realestate <- read_excel("SLO_Real_Estate_Feb-Apr2022.xlsx")
+
+realestate_clean <- realestate %>%
+  filter(LotSize != 416869 & LotSize != 108900 & LotSize != 84071)
+
+realestate_clean <- realestate_clean %>%
+  mutate(HomeTypeNew = 
+           case_when(HomeType == "Condominium" ~ "Condo", 
+             HomeType == "SingleFamilyResidence" ~ "SingleFam",
+             HomeType == "ManufacturedHome" ~ "Manufactured",
+             TRUE ~ "Other")) 
+
+realestate_clean$Cooling = factor(realestate_clean$Cooling)
+realestate_clean$Heating = factor(realestate_clean$Heating)
+realestate_clean$HomeTypeNew = factor(realestate_clean$HomeTypeNew)
+realestate_clean$Pool = factor(realestate_clean$Pool)
 ```
 
 
+
 ```{r}
-full.model <- lm(SoldPrice~., data = realestate)
+n <- 141
+numtrain = ceiling(.8*n)
+set.seed(678)
+train_ind = sample(n, numtrain)
+traindata = realestate_clean[train_ind, ]
+testdata = realestate_clean[-train_ind, ]
+set.seed(NULL)
+```
+
+
+
+```{r}
+full.model <- lm(SoldPrice~., data = traindata)
 summary(full.model)
 ```
 
 ```{r}
-best.sub <- summary(regsubsets(formula(full.model), data=realestate, method = "exhaustive", nbest = 2))
+best.sub <- summary(regsubsets(formula(full.model), data=traindata, method = "exhaustive", nbest = 2))
 
 ```
 
@@ -60,12 +83,12 @@ bs %>%
 ```
 
 ```{r}
-fit.one <- lm(I(log(SoldPrice))~Sqft+LotSize+HomeType, data = realestate)
+fit.one <- lm(I(log(SoldPrice))~Sqft+LotSize+HomeType, data = traindata)
 
 summary(fit.one)
 ```
 ```{r}
-realestate %>%
+traindata %>%
   arrange(desc(LotSize)) %>%
   filter()
 ```
@@ -73,12 +96,15 @@ realestate %>%
 
 
 ```{r}
-plot(resid(lm(I(log(SoldPrice))~LotSize + HomeType, data = realestate))~resid(lm(Sqft ~ LotSize + HomeType, data = realestate)))
+plot(resid(lm(I(log(SoldPrice))~LotSize + HomeType, data = traindata))~resid(lm(Sqft ~ LotSize + HomeType, data = traindata)))
 ```
 
 
 ```{r}
-plot(resid(lm(I(log(SoldPrice))~Sqft + HomeType, data = realestate))~resid(lm(LotSize ~ YearBuilt + Sqft + HomeType, data = realestate)))
+plot(resid(lm(I(log(SoldPrice))~Sqft + HomeType, data = traindata))~resid(lm(I(log(LotSize)) ~ YearBuilt + Sqft + HomeType, data = traindata)))
+
+plot(resid(lm(I(log(SoldPrice))~Sqft + HomeType, data = traindata))~resid(lm(LotSize ~ YearBuilt + Sqft + HomeType, data = traindata)))
+
 ```
 
 ```{r}
@@ -88,7 +114,7 @@ plot(fit.one)
 
 
 ```{r}
-fit.two <- lm(I(log(SoldPrice))~Sqft+YearBuilt+HomeType, data = realestate)
+fit.two <- lm(I(sqrt(SoldPrice))~Sqft+YearBuilt+HomeType, data = realestate)
 
 summary(fit.two)
 ```
@@ -99,7 +125,7 @@ plot(resid(lm(I(log(SoldPrice))~YearBuilt + HomeType, data = realestate))~resid(
 
 
 ```{r}
-plot(resid(lm(I(log(SoldPrice))~Sqft + HomeType, data = realestate))~resid(lm(YearBuilt ~ Sqft + HomeType, data = realestate)))
+plot(resid(lm(I(log(SoldPrice))~Sqft + HomeTypeNew, data = traindata))~resid(lm(YearBuilt ~ Sqft + HomeTypeNew, data = traindata)))
 ```
 
 
@@ -107,6 +133,9 @@ plot(resid(lm(I(log(SoldPrice))~Sqft + HomeType, data = realestate))~resid(lm(Ye
 plot(fit.two)
 ```
 
+```{r}
+shapiro.test(fit.two$residuals)
+```
 
 
 ```{r}
@@ -116,14 +145,8 @@ realestate %>%
 ```
 
 ```{r}
-realestate <- realestate %>%
-  mutate(HomeTypeNew = 
-           case_when(HomeType == "Condominium" ~ "Condo", 
-             HomeType == "SingleFamilyResidence" ~ "SingleFam",
-             HomeType == "ManufacturedHome" ~ "Manufactured",
-             TRUE ~ "Other")) 
 
-realestate %>%
+traindata %>%
   ggplot() +
   geom_point(aes(y = SoldPrice, x = Sqft, col = HomeTypeNew))
   
@@ -139,7 +162,7 @@ realestate %>%
 
 
 ```{r}
-fit.three <- lm(I(log(SoldPrice))~Sqft+HomeTypeNew+YearBuilt, data = realestate)
+fit.three <- lm(I((SoldPrice))~Sqft+HomeTypeNew+YearBuilt, data = realestate)
 
 summary(fit.three)
 ```
@@ -243,7 +266,7 @@ boxCox(lm(SoldPrice~Sqft+YearBuilt+HomeTypeNew, data = realestate))
 ```
 
 ```{r}
-fit.five = lm(lm(I(sqrt(SoldPrice))~Sqft+YearBuilt+HomeTypeNew, data = realestate))
+fit.five = lm(lm(I(sqrt(SoldPrice))~Sqft+LotSize+HomeTypeNew, data = traindata))
 
 summary(fit.five)
 ```
@@ -270,6 +293,56 @@ plot(resid(lm(I(sqrt(SoldPrice))~YearBuilt + HomeTypeNew, data = realestate))~re
 realestate %>%
   ggplot() +
   geom_boxplot(aes(x = HomeTypeNew, y = SoldPrice))
+```
+
+
+
+```{r}
+fit.three <- lm(SoldPrice~Sqft+LotSize+HomeType, data = realestate)
+```
+
+
+```{r}
+boxCox(fit.three)
+
+```
+
+```{r}
+plot(fit.three)
+```
+
+
+
+
+```{r}
+full <- read_excel("SLO_Real_Estate_Feb-Apr2022.xlsx")
+n <- 144
+numtrain = ceiling(.8*n)
+set.seed(678)
+train_ind = sample(n, numtrain)
+bren = full[train_ind, ]
+bren <- bren %>%
+  mutate(HomeTypeNew = 
+           case_when(HomeType == "Condominium" ~ "Condo", 
+             HomeType == "SingleFamilyResidence" ~ "SingleFam",
+             HomeType == "ManufacturedHome" ~ "Manufactured",
+             TRUE ~ "Other")) 
+```
+
+```{r}
+bren.model <- lm(SoldPrice ~ Sqft + LotSize + HomeTypeNew, data = bren)
+```
+
+```{r}
+plot(resid(lm(SoldPrice ~ Sqft + HomeTypeNew, data = bren))~resid(lm(LotSize ~ Sqft + HomeTypeNew, data = bren)), xlab = "LotSize | Others", ylab = "SoldPrice | Others")
+```
+
+```{r}
+plot(resid(lm(SoldPrice ~ Sqft + HomeTypeNew, data = traindata))~resid(lm(LotSize ~ Sqft + HomeTypeNew, data = traindata)), xlab = "LotSize | Others", ylab = "SoldPrice | Others")
+```
+```{r}
+fit.three <- lm(SoldPrice ~ Sqft + LotSize + HomeTypeNew, data = traindata)
+plot(fit.three)
 ```
 
 
