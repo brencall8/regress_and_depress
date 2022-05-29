@@ -35,6 +35,7 @@ realestate_clean <- realestate_clean %>%
 realestate_clean$Cooling = factor(realestate_clean$Cooling)
 realestate_clean$Heating = factor(realestate_clean$Heating)
 realestate_clean$HomeType = factor(realestate_clean$HomeType)
+realestate_clean$HomeTypeNew = factor(realestate_clean$HomeTypeNew)
 realestate_clean$Pool = factor(realestate_clean$Pool)
 ```
 
@@ -71,7 +72,9 @@ cor(realestate[,c(1, 2, 3, 4, 5, 6, 7)])
 # Matrix Scatterplot with ggpairs()
 ggpairs(traindata[,-c(8:12)], 
         upper=list(continuous='points'),
-        lower=list(continuous='cor',combo='blank',discrete='blank'))
+        lower=list(continuous='cor',combo='blank',discrete='blank'))  +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black"))
 ```
 
 ```{r}
@@ -82,11 +85,10 @@ summary(fit_interaction)
 plot(SoldPrice ~ Sqft, data = traindata, 
      col = c('cornflowerblue','royalblue','cyan', 'darkseagreen')[HomeTypeNew], 
      pch = c(15, 16, 17, 18)[HomeTypeNew])
-legend('bottomright',legend=levels(traindata$HomeTypeNew), 
-       pch = c(15, 16, 17, 18), 
-       col = c('cornflowerblue','royalblue','cyan', 'darkseagreen'), 
+legend('bottomright',legend=levels(traindata$HomeTypeNew),
+       pch = c(15, 16, 17, 18),
+       col = c('cornflowerblue','royalblue','cyan', 'darkseagreen'),
        lty = 1)
-coeff = fit_interaction$coeff
 abline(coeff[1], coeff[2], col='cornflowerblue')
 abline(coeff[1] + coeff[3], coeff[2] + coeff[6], col = 'royalblue') 
 abline(coeff[1] + coeff[4], coeff[2] + coeff[7], col = 'cyan') 
@@ -96,28 +98,44 @@ abline(coeff[1] + coeff[5], coeff[2] + coeff[8], col = 'seagreen')
 ```{r}
 # Histograms of Quantitative Variables 
 traindata %>%
-  ggplot(aes(x = Sqft, fill = HomeTypeNew)) +
-  geom_histogram() +
-  scale_fill_manual(values = c('aquamarine', 'cornflowerblue','royalblue', 'cadetblue', 'cyan', 
-                               'darkblue', 'deepskyblue', 'darkseagreen', 'darkseagreen1'))
+  ggplot(aes(x = Sqft)) +
+  geom_histogram(bins = 10) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black"))
 
 traindata %>%
-  ggplot(aes(x = YearBuilt, fill = Pool)) +
-  geom_histogram(binwidth = 10) +
-  scale_fill_manual(values = c('royalblue', 'cyan'))
+  ggplot(aes(x = Sqft, fill = HomeTypeNew)) +
+  geom_histogram(bins = 10) +
+  scale_fill_manual(values = c('aquamarine', 'cornflowerblue','royalblue', 'cadetblue', 'cyan', 
+                               'darkblue', 'deepskyblue', 'darkseagreen', 'darkseagreen1')) +
+  facet_wrap(~HomeTypeNew) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+traindata %>%
+  ggplot(aes(x = LotSize)) +
+  geom_histogram(binwidth = 2000) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black"))
 
 traindata %>%
   ggplot(aes(x = LotSize, fill = HomeTypeNew)) +
   geom_histogram(binwidth = 2000) +
   scale_fill_manual(values = c('aquamarine', 'cornflowerblue','royalblue', 'cadetblue', 'cyan', 
-                               'darkblue', 'deepskyblue', 'darkseagreen', 'darkseagreen1'))
+                               'darkblue', 'deepskyblue', 'darkseagreen', 'darkseagreen1')) +
+  facet_wrap(~HomeTypeNew) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
 ```
 
 ```{r}
 # Interaction Plot Between Home Type and Pool
-traindata$Pool=factor(traindata$Pool)
-with(traindata, interaction.plot(HomeTypeNew, Pool, log(SoldPrice), type = 'b', 
+with(traindata, interaction.plot(HomeTypeNew, Pool, SoldPrice, type = 'b', 
                                  col = c('royalblue','cyan'), 
+                                 pch = c(16, 17)))
+with(traindata, interaction.plot(Pool, HomeTypeNew, SoldPrice, type = 'b', 
+                                 col = c('cornflowerblue','royalblue','cyan', 'darkseagreen'), 
                                  pch = c(16, 17)))
 ```
 
