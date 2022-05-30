@@ -58,8 +58,7 @@ set.seed(NULL)
 ```{r}
 # Matrix Scatterplot (outliers not removed)
 pairs(SoldPrice ~ Sqft + Bed + Bath + YearBuilt + LotSize + Parking, data = realestate, 
-      col = c('aquamarine', 'cornflowerblue','royalblue', 'cadetblue', 'cyan', 
-              'darkblue', 'deepskyblue', 'darkseagreen', 'darkseagreen1')[factor(realestate_clean$HomeTypeNew)], 
+      col = c('cornflowerblue','royalblue','cyan', 'darkseagreen')[factor(realestate_clean$HomeTypeNew)], 
       pch = 19)
 ```
 
@@ -285,6 +284,9 @@ anova(lm(SoldPrice ~ Sqft + HomeTypeNew, data = traindata),
 
 anova(lm(I(sqrt(SoldPrice)) ~ LotSize + Sqft + HomeTypeNew, data = traindata), 
       lm(I(sqrt(SoldPrice)) ~ LotSize + Sqft + HomeTypeNew + Sqft:HomeTypeNew, data = traindata))
+
+anova(lm(I(sqrt(SoldPrice)) ~ LotSize + Sqft + HomeTypeNew, data = traindata), 
+      lm(I(sqrt(SoldPrice)) ~ LotSize + Sqft + HomeTypeNew + Sqft:LotSize, data = traindata))
 ```
 
 ```{r}
