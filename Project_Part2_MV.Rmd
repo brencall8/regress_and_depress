@@ -122,3 +122,10 @@ R_squared_pred <- PRESS / SSTO
 ```
 
 
+```{r}
+full_model <- lm(I(sqrt(SoldPrice)) ~ Sqft + LotSize + HomeTypeNew, data = realestate_clean)
+summary(full_model)
+```
+
+
+

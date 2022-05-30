@@ -260,8 +260,12 @@ bptest(final_model)
 
 # VIII. Fit a Linear Model 
 ```{r}
-summary(final_model)
-vif(final_model)
+summary(fit.two)
+```
+
+
+```{r}
+vif(fit.two)
 ```
 
 
