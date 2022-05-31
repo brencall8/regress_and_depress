@@ -300,3 +300,75 @@ predict(final_model, newdata = new.house, interval = "prediction", level=0.95)
 ```
 
 
+# X. Model Validation
+
+```{r}
+model <- lm(I(sqrt(SoldPrice)) ~ Sqft + LotSize + HomeTypeNew, data = traindata)
+```
+
+
+```{r}
+predicted_test <- predict(model, testdata)
+actual_test <- sqrt(testdata$SoldPrice)
+
+MSPE <- mean((actual_test - predicted_test)^2)
+s1 <- sqrt(MSPE)
+
+MSPE
+s1
+```
+
+
+```{r}
+actual_train <- sqrt(traindata$SoldPrice)
+predicted_train <- model$fitted.values
+
+MSE <- mean((actual_train - predicted_train)^2)
+s2 <- sqrt(MSE)
+
+MSE
+s2
+```
+
+
+
+```{r}
+SSTO <- sum((anova(model))$'Sum Sq')
+
+PRESS <- sum((resid(model) / (1 - hatvalues(model)))^2)
+
+R_squared_pred <- 1 - (PRESS / SSTO)
+
+PRESS
+R_squared_pred
+
+```
+
+```{r}
+summary(model)
+```
+
+
+```{r}
+anova(model)
+```
+
+
+
+```{r}
+full_model <- lm(I(sqrt(SoldPrice)) ~ Sqft + LotSize + HomeTypeNew, data = realestate_clean)
+summary(full_model)
+```
+
+
+```{r}
+data.frame("FullModel" = full_model$coefficients, "TrainingModel" = model$coefficients)
+```
+
+
+
+```{r}
+bonferonni <- (1 - 0.05 / 5)
+confint(model, level = bonferonni)
+```
+
