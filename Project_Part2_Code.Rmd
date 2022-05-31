@@ -1,5 +1,5 @@
 ---
-title: "Residential Regression R Code"
+title: "Appendix B"
 author: "Brendan Callender, Martin Hsu, and Rachel Roggenkemper"
 date: "5/26/2022"
 output: html_document
@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## Appendix 3A: Loading R Packages Used in Analysis
 ```{r}
 library(tidyverse)
 library(readxl)
@@ -19,6 +20,7 @@ library(GGally)
 library('lmtest')
 ```
 
+## Appendix 3B: R Code Data Importing and Cleaning 
 ```{r}
 realestate <- read_excel("SLO_Real_Estate_Feb-Apr2022.xlsx")
 
@@ -42,6 +44,7 @@ realestate_clean$Pool = factor(realestate_clean$Pool)
 
 
 # IV. Split the Data
+## Appendix 4A: R Code for Data Splitting
 ```{r}
 n <- 141
 numtrain = ceiling(.8*n)
@@ -55,20 +58,23 @@ set.seed(NULL)
 
 
 # V. Data Visualization
+## Appendix 5A: R Code for Generating Figure 5.1
 ```{r}
-# Matrix Scatterplot (outliers not removed)
+# Figure 5.1: Matrix Scatterplot (outliers not removed)
 pairs(SoldPrice ~ Sqft + Bed + Bath + YearBuilt + LotSize + Parking, data = realestate, 
       col = c('cornflowerblue','royalblue','cyan', 'darkseagreen')[factor(realestate_clean$HomeTypeNew)], 
       pch = 19)
 ```
 
+## Appendix 5B: R Code for Generating Table 5.1
 ```{r}
-# Correlation Matrix (outliers not removed)
+# Table 5.1: Correlation Matrix (outliers not removed)
 cor(realestate[,c(1, 2, 3, 4, 5, 6, 7)])
 ```
 
+## Appendix 5C: R Code for Generating Figure 5.2
 ```{r}
-# Matrix Scatterplot with ggpairs()
+# Figure 5.2: Matrix Scatterplot with ggpairs()
 ggpairs(traindata[,-c(8:12)], 
         upper=list(continuous='points'),
         lower=list(continuous='cor',combo='blank',discrete='blank'))  +
@@ -76,8 +82,9 @@ ggpairs(traindata[,-c(8:12)],
 panel.background = element_blank(), axis.line = element_line(colour = "black"))
 ```
 
+## Appendix 5D: R Code for Generating Figure 5.3
 ```{r}
-# Interaction Plot Between Sold Price and Square Footage (Home Type)
+# Figure 5.3: Interaction Plot Between Sold Price and Square Footage (Home Type)
 fit_interaction = lm(SoldPrice~Sqft*HomeTypeNew, data=traindata)
 summary(fit_interaction)
 
@@ -94,14 +101,31 @@ abline(coeff[1] + coeff[4], coeff[2] + coeff[7], col = 'cyan')
 abline(coeff[1] + coeff[5], coeff[2] + coeff[8], col = 'seagreen') 
 ```
 
+## Appendix 5E: R Code for Generating Figure 5.4
+```{r}
+# Figure 5.4: Interaction Plot Between Home Type and Pool
+with(traindata, interaction.plot(HomeTypeNew, Pool, SoldPrice, type = 'b', 
+                                 col = c('royalblue','cyan'), 
+                                 pch = c(16, 17)))
+with(traindata, interaction.plot(Pool, HomeTypeNew, SoldPrice, type = 'b', 
+                                 col = c('cornflowerblue','royalblue','cyan', 'darkseagreen'), 
+                                 pch = c(16, 17)))
+```
+
+## Appendix 5F: R Code for Generating Figure 5.5
+## Appendix 5G: R Code for Generating Figure 5.6
+## Appendix 5H: R Code for Generating Figure 5.7
+## Appendix 5I: R Code for Generating Figure 5.8
 ```{r}
 # Histograms of Quantitative Variables 
+# Figure 5.5: Distribution of Sqft
 traindata %>%
   ggplot(aes(x = Sqft)) +
   geom_histogram(bins = 10) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 panel.background = element_blank(), axis.line = element_line(colour = "black"))
 
+# Figure 5.6: Distribution of Sqft, by HomeTypeNew
 traindata %>%
   ggplot(aes(x = Sqft, fill = HomeTypeNew)) +
   geom_histogram(bins = 10) +
@@ -111,12 +135,14 @@ traindata %>%
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 panel.background = element_blank(), axis.line = element_line(colour = "black"))
 
+# Figure 5.7: Distribution of LotSize
 traindata %>%
   ggplot(aes(x = LotSize)) +
   geom_histogram(binwidth = 2000) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 panel.background = element_blank(), axis.line = element_line(colour = "black"))
 
+# Figure 5.8: Distribution of Lotsize, by HomeTypeNew
 traindata %>%
   ggplot(aes(x = LotSize, fill = HomeTypeNew)) +
   geom_histogram(binwidth = 2000) +
@@ -127,17 +153,9 @@ traindata %>%
 panel.background = element_blank(), axis.line = element_line(colour = "black"))
 ```
 
+## Appendix 5J: R Code for Generating Figure 5.9
 ```{r}
-# Interaction Plot Between Home Type and Pool
-with(traindata, interaction.plot(HomeTypeNew, Pool, SoldPrice, type = 'b', 
-                                 col = c('royalblue','cyan'), 
-                                 pch = c(16, 17)))
-with(traindata, interaction.plot(Pool, HomeTypeNew, SoldPrice, type = 'b', 
-                                 col = c('cornflowerblue','royalblue','cyan', 'darkseagreen'), 
-                                 pch = c(16, 17)))
-```
-
-```{r}
+# Figure 5.9: Distribution of Sqft and LotSize as predictors of SoldPrice
 # 3D Scatterplot 
 s3d <- scatterplot3d(traindata2$Sqft, y=traindata2$SoldPrice, z=traindata2$LotSize,
                      xlab = "Square Footage (sqft)",
@@ -227,12 +245,19 @@ bs2<- data.frame(best.sub2$outmat, p=p, Cp, AIC, BIC, Rsq, Rsq.adj, s) %>%
 
 
 # VII. Residual Analysis
+## Appendix 7A: R Code for Generating Figure 7.1
+## Appendix 7B: R Code for Generating Figure 7.2
+## Appendix 7C: R Code for Generating Figure 7.3
+## Appendix 7D: R Code and Output for Breusch-Pagan Test on Model Residuals
+## Appendix 7E: R Code and Output for Shapiro-Wilk Test on Model Residuals
 ```{r}
 final_model = lm(I(sqrt(SoldPrice)) ~ Sqft + LotSize + HomeTypeNew, data = traindata)
 
+# Figure 7.1: Four-in-One Model Diagnostic Plot 
 par(mfrow=c(2,2)) #plot in 2 by 2 grid   
 plot(final_model)
 
+# Figure 7.2: Residuals Plotted against Fitted Values, Sqft, LotSize, and HomeTypeNew
 par(mfrow=c(2,2)) #plot in 2 by 2 grid  
 
 plot(resid(final_model) ~ fitted(final_model), ylab='Residuals', xlab='Fitted')
@@ -249,6 +274,7 @@ abline(h=0,lty=2)
 
 par(mfrow=c(1,1))
 
+# Figure 7.3: Distribution of Model Residuals 
 hist(resid(final_model), main='', xlab='Residuals')
 
 shapiro.test(resid(final_model))
@@ -266,31 +292,34 @@ vif(final_model)
 
 
 # IX. Statistical Inference
+## Appendix 9A: R Code and Output for Overall F-Test
 ```{r}
-# Overall F-Test
+# Figure 9.1: Overall F-Test
 summary(final_model)
 ```
 
+## Appendix 9B: R Code and Output for Partial F-Test
 ```{r}
-# Partial F-Test
+# Figure 9.2: Partial F-Test
 model_reduced = lm(I(sqrt(SoldPrice)) ~ Sqft, data=traindata)
 anova(model_reduced, final_model)
 ```
 
+## Appendix 9C: R Code and Output for Partial F-Test for Interaction 
+## Appendix 9D: R Code and Output for Partial F-Test for Interaction 
 ```{r}
-# Test for Interaction Significance 
-anova(lm(SoldPrice ~ Sqft + HomeTypeNew, data = traindata), 
-      lm(SoldPrice ~ Sqft + HomeTypeNew + Sqft:HomeTypeNew, data = traindata))
-
+# Figure 9.3: Test for Sqft:HomeTypeNew Interaction Significance
 anova(lm(I(sqrt(SoldPrice)) ~ LotSize + Sqft + HomeTypeNew, data = traindata), 
       lm(I(sqrt(SoldPrice)) ~ LotSize + Sqft + HomeTypeNew + Sqft:HomeTypeNew, data = traindata))
 
+# Figure 9.4: Test for Sqft:LotSize Interaction Significance
 anova(lm(I(sqrt(SoldPrice)) ~ LotSize + Sqft + HomeTypeNew, data = traindata), 
       lm(I(sqrt(SoldPrice)) ~ LotSize + Sqft + HomeTypeNew + Sqft:LotSize, data = traindata))
 ```
 
+## Appendix 9E: R Code and Output for Confidence Intervals 
 ```{r}
-# CIs for Mean Response Value and Future Predicted Value 
+# Figure 9.5: CIs for Mean Response Value and Future Predicted Value 
 new.house = data.frame(Sqft = 3000, LotSize = 10000, HomeTypeNew = "SingleFam")
 
 predict(final_model, newdata = new.house, interval = "confidence", level=0.95)
