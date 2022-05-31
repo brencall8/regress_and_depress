@@ -111,3 +111,21 @@ summary(model)
 ```
 
 
+```{r}
+
+SSTO <- sum((anova(model))$'Sum Sq')
+
+PRESS <- sum((resid(model) / (1 - hatvalues(model)))^2)
+
+R_squared_pred <- PRESS / SSTO
+
+```
+
+
+```{r}
+full_model <- lm(I(sqrt(SoldPrice)) ~ Sqft + LotSize + HomeTypeNew, data = realestate_clean)
+summary(full_model)
+```
+
+
+
