@@ -307,7 +307,9 @@ model <- lm(I(sqrt(SoldPrice)) ~ Sqft + LotSize + HomeTypeNew, data = traindata)
 ```
 
 
+
 ```{r}
+#External Validation
 predicted_test <- predict(model, testdata)
 actual_test <- sqrt(testdata$SoldPrice)
 
@@ -320,6 +322,7 @@ s1
 
 
 ```{r}
+#External Validation
 actual_train <- sqrt(traindata$SoldPrice)
 predicted_train <- model$fitted.values
 
@@ -333,6 +336,7 @@ s2
 
 
 ```{r}
+#Internal Validation
 SSTO <- sum((anova(model))$'Sum Sq')
 
 PRESS <- sum((resid(model) / (1 - hatvalues(model)))^2)
@@ -356,18 +360,22 @@ anova(model)
 
 
 ```{r}
+#Model for entire dataset
 full_model <- lm(I(sqrt(SoldPrice)) ~ Sqft + LotSize + HomeTypeNew, data = realestate_clean)
 summary(full_model)
 ```
 
 
 ```{r}
+#coefficients table
 data.frame("FullModel" = full_model$coefficients, "TrainingModel" = model$coefficients)
 ```
 
 
 
 ```{r}
+#Bonferonni adjusted confidence interval
+#95% family wise confidence 
 bonferonni <- (1 - 0.05 / 5)
 confint(model, level = bonferonni)
 ```
