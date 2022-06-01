@@ -324,7 +324,13 @@ anova(lm(I(sqrt(SoldPrice)) ~ LotSize + Sqft + HomeTypeNew, data = traindata),
 ## Appendix 9E: R Code and Output for Confidence Intervals 
 ```{r}
 # Figure 9.5: CIs for Mean Response Value and Future Predicted Value 
-new.house = data.frame(Sqft = 3000, LotSize = 10000, HomeTypeNew = "SingleFam")
+traindata_singlefam <- traindata %>%
+  filter(HomeTypeNew == "SingleFam")
+
+mean(traindata_singlefam$Sqft)
+mean(traindata_singlefam$LotSize)
+
+new.house = data.frame(Sqft = 1865, LotSize = 7079, HomeTypeNew = "SingleFam")
 
 predict(final_model, newdata = new.house, interval = "confidence", level=0.95)
 predict(final_model, newdata = new.house, interval = "prediction", level=0.95)
